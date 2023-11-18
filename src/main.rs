@@ -11,8 +11,6 @@ use bevy::{
 use bevy_rapier3d::prelude::{Collider, KinematicCharacterController, KinematicCharacterControllerOutput, RigidBody};
 use bevy_rapier3d::control::{CharacterAutostep, CharacterLength};
 
-
-
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -30,7 +28,6 @@ fn main() {
             ..default()
         }))
         .add_systems(Startup, setup)
-        .add_systems(Startup, init_system)
         .add_systems(Update, update_system)
         .add_systems(Update, read_result_system)
         .add_systems(Update, mouse_look_system)
@@ -64,36 +61,61 @@ fn setup(
     });
 
     // camera
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, PLAYER_HEIGHT, 0.0),
-        ..default()
-    })
-    .insert(KinematicCharacterController {
-        // Your controller configuration here
-        ..default()
-    });
-}
-
-fn init_system(mut commands: Commands) {
-    commands.spawn((
-        RigidBody::KinematicPositionBased,
-        Collider::cuboid(PLAYER_WIDTH, PLAYER_WIDTH,PLAYER_HEIGHT),
-        KinematicCharacterController {
-            offset: CharacterLength::Relative(0.01),  // Character offset
-            up: Vec3::Z,  // Z as the up vector
+    commands.spawn(TransformBundle::default())
+        .with_children(|parent| {
+            // Spawn the camera as a child of the character
+            parent.spawn(Camera3dBundle {
+                transform: Transform::from_xyz(0.0, PLAYER_HEIGHT, 0.0),
+                ..default()
+            });
+        })
+        .insert(RigidBody::KinematicPositionBased)
+        .insert(Collider::cuboid(PLAYER_WIDTH, PLAYER_WIDTH, PLAYER_HEIGHT))
+        .insert(KinematicCharacterController {
+            offset: CharacterLength::Relative(PLAYER_OFFSET),
+            up: Vec3::Z,
             autostep: Some(CharacterAutostep {
-                max_height: CharacterLength::Relative(0.3),
-                min_width: CharacterLength::Relative(0.5),
+                max_height: CharacterLength::Relative(AUTOSTEP_HEIGHT),
+                min_width: CharacterLength::Relative(AUTOSTEP_WIDTH),
                 include_dynamic_bodies: true,
             }),
             ..default()
-        },
-    ));
+        });
 }
 
-fn update_system(mut controllers: Query<&mut KinematicCharacterController>) {
-    for mut controller in controllers.iter_mut() {
-        controller.translation = Some(Vec3::new(1.0, -0.5, 1.0));
+#[derive(Component)]
+struct Velocity(Vec3);
+
+fn update_system(
+    time: Res<Time>,
+    keyboard_input: Res<Input<KeyCode>>,
+    mut query: Query<(&mut Transform, &Camera)>,
+) {
+    let mut movement_direction = Vec3::ZERO;
+
+    if keyboard_input.pressed(KeyCode::W) {
+        movement_direction -= Vec3::Z; // Forward
+    }
+    if keyboard_input.pressed(KeyCode::S) {
+        movement_direction += Vec3::Z; // Backward
+    }
+    if keyboard_input.pressed(KeyCode::A) {
+        movement_direction -= Vec3::X; // Left
+    }
+    if keyboard_input.pressed(KeyCode::D) {
+        movement_direction += Vec3::X; // Right
+    }
+
+    let speed = 5.0; // Set your desired speed
+
+    for (mut transform, _camera) in query.iter_mut() {
+        // Transform the movement direction from the camera's local space to world space
+        let mut world_movement_direction = transform.rotation.mul_vec3(movement_direction);
+        world_movement_direction.y = 0.0;
+        if world_movement_direction.length() > 0.0 {
+            let normalized_movement = world_movement_direction.normalize() * speed;
+            transform.translation += normalized_movement * time.delta_seconds();
+        }
     }
 }
 
@@ -104,17 +126,17 @@ fn read_result_system(controllers: Query<(Entity, &KinematicCharacterControllerO
     }
 }
 
-use bevy::prelude::*;
-
 fn mouse_look_system(
+    time: Res<Time>,
     mut mouse_motion_events: EventReader<MouseMotion>,
     mut query: Query<(&mut Transform, &Camera)>,
     mut current_pitch: Local<f32>, // Tracking the current pitch
 ) {
+    let delta_seconds = time.delta_seconds();
     for (mut transform, _camera) in query.iter_mut() {
         for event in mouse_motion_events.iter() {
-            let sensitivity_x = MOUSE_SENSITIVITY;
-            let sensitivity_y = MOUSE_SENSITIVITY;
+            let sensitivity_x = MOUSE_SENSITIVITY * delta_seconds;
+            let sensitivity_y = MOUSE_SENSITIVITY * delta_seconds;
 
             // Calculate new pitch
             let mut new_pitch = *current_pitch + (-event.delta.y * sensitivity_y);
