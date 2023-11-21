@@ -1,36 +1,30 @@
 mod config;
 use config::*;
 
+mod window_setup;
+use window_setup::*;
+
 use bevy::{
-    ecs::query,
     input::mouse::MouseMotion,
     prelude::*,
-    window::{Cursor, CursorGrabMode, PresentMode, PrimaryWindow, WindowResolution},
 };
+
+
+use bevy::window::PrimaryWindow;
 
 use bevy_rapier3d::prelude::{Collider, KinematicCharacterController, KinematicCharacterControllerOutput, RigidBody};
 use bevy_rapier3d::control::{CharacterAutostep, CharacterLength};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "I am a window!".into(),
-                resolution: WindowResolution::new(SCREEN_WIDTH, SCREEN_HEIGHT),
-                present_mode: PresentMode::AutoVsync,
-                cursor: Cursor { 
-                    icon: (CursorIcon::Crosshair), 
-                    visible: (false), 
-                    grab_mode: (CursorGrabMode::Locked), 
-                    hit_test: (true) },
-                ..default()
-            }),
-            ..default()
-        }))
+        .add_plugins(DefaultPlugins)
+
         .add_systems(Startup, setup)
+        .add_systems(Startup, setup_window)
         .add_systems(Update, update_system)
-        .add_systems(Update, read_result_system)
         .add_systems(Update, mouse_look_system)
+        .add_systems(Update, read_result_system)
+        .add_systems(Update, update_cursor)
         .run();
 }
 
@@ -156,4 +150,12 @@ fn mouse_look_system(
             transform.rotation = yaw * transform.rotation; // Rotate around global y axis
         }
     }
+}
+
+pub fn update_cursor(
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
+) {
+    let mut window = windows.single_mut();
+    let center = Vec2::new(window.width() / 2.0, window.height() / 2.0);
+    window.set_cursor_position(Some(center));
 }
