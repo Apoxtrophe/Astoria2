@@ -2,7 +2,7 @@ use super::config;
 use config::*;
 
 use bevy::prelude::*;
-use bevy::window::{Window, PresentMode, CursorIcon, CursorGrabMode, WindowResolution, Cursor};
+use bevy::window::{Window, PresentMode, CursorIcon, CursorGrabMode, WindowResolution};
 use bevy::window::PrimaryWindow;
 
 pub fn setup_window(
