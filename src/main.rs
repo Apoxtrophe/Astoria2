@@ -8,8 +8,6 @@ use bevy::{
     input::mouse::MouseMotion,
     prelude::*,
 };
-
-
 use bevy::window::PrimaryWindow;
 
 use bevy_rapier3d::prelude::{Collider, KinematicCharacterController, KinematicCharacterControllerOutput, RigidBody};
@@ -18,13 +16,12 @@ use bevy_rapier3d::control::{CharacterAutostep, CharacterLength};
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-
         .add_systems(Startup, setup)
         .add_systems(Startup, setup_window)
         .add_systems(Update, update_system)
         .add_systems(Update, mouse_look_system)
         .add_systems(Update, read_result_system)
-        .add_systems(Update, update_cursor)
+        .add_systems(Update, draw_cursor)
         .run();
 }
 
@@ -36,8 +33,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-
-
     // plane
     commands.spawn((
         PbrBundle {
@@ -74,7 +69,8 @@ fn setup(
                 include_dynamic_bodies: true,
             }),
             ..default()
-        });
+    });
+
 }
 
 #[derive(Component)]
@@ -128,7 +124,7 @@ fn mouse_look_system(
 ) {
     let delta_seconds = time.delta_seconds();
     for (mut transform, _camera) in query.iter_mut() {
-        for event in mouse_motion_events.iter() {
+        for event in mouse_motion_events.read() {
             let sensitivity_x = MOUSE_SENSITIVITY * delta_seconds;
             let sensitivity_y = MOUSE_SENSITIVITY * delta_seconds;
 
@@ -152,10 +148,25 @@ fn mouse_look_system(
     }
 }
 
-pub fn update_cursor(
+fn draw_cursor(
+    camera_query: Query<(&Camera, &GlobalTransform)>,
     mut windows: Query<&mut Window, With<PrimaryWindow>>,
+    mut gizmos: Gizmos,
 ) {
-    let mut window = windows.single_mut();
+    let (camera, camera_transform) = camera_query.single();
+
+    let window = windows.single_mut();
     let center = Vec2::new(window.width() / 2.0, window.height() / 2.0);
-    window.set_cursor_position(Some(center));
+
+    // Calculate a ray pointing from the camera into the world based on the cursor's position.
+    let Some(ray) = camera.viewport_to_world(camera_transform, center) else {
+        return;
+    };
+    // Calculate the position of the cursor along the ray.
+    let cursor_position = ray.origin + ray.direction * CURSOR_DISTANCE;
+    // Calculate the normal. In this case, it's the negative of the camera's direction.
+    let cursor_normal = -ray.direction;
+    // Draw a circle at the cursor position.
+    gizmos.circle(cursor_position, cursor_normal, CURSOR_RADIUS, CURSOR_COLOR);
 }
+ 

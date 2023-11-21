@@ -2,7 +2,7 @@ use super::config;
 use config::*;
 
 use bevy::prelude::*;
-use bevy::window::{Window, PresentMode, CursorIcon, CursorGrabMode, WindowResolution};
+use bevy::window::{Window, PresentMode, CursorIcon, CursorGrabMode, WindowResolution, Cursor};
 use bevy::window::PrimaryWindow;
 
 pub fn setup_window(
@@ -14,4 +14,5 @@ pub fn setup_window(
         window.present_mode = PresentMode::AutoVsync;
         window.cursor.icon = CursorIcon::Crosshair;
         window.cursor.grab_mode = CursorGrabMode::Locked;
+        window.cursor.visible = false;
 } 
