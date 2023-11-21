@@ -10,7 +10,7 @@ use bevy::window::PrimaryWindow;
 use bevy_rapier3d::prelude::KinematicCharacterControllerOutput;
 use bevy_rapier3d::prelude::{Collider, KinematicCharacterController, RigidBody};
 use bevy_rapier3d::control::{CharacterAutostep, CharacterLength};
-
+use bevy_atmosphere::prelude::*;
 
 pub fn build_camera(
     mut commands: Commands,
@@ -20,8 +20,10 @@ pub fn build_camera(
             // Spawn the camera as a child of the character
             parent.spawn(Camera3dBundle {
                 transform: Transform::from_xyz(0.0, PLAYER_HEIGHT, 0.0),
+                
                 ..default()
-            });
+            })
+            .insert(AtmosphereCamera::default());
         })
         .insert(RigidBody::KinematicPositionBased)
         .insert(Collider::cuboid(PLAYER_WIDTH, PLAYER_WIDTH, PLAYER_HEIGHT))

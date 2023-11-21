@@ -11,11 +11,13 @@ mod game_systems;
 use game_systems::*;
 
 use bevy::prelude::*;
+use bevy_atmosphere::prelude::*;
 
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(AtmospherePlugin)
         .add_systems(Startup, setup)
         .add_systems(Startup, setup_window)
         .add_systems(Startup, build_camera)
@@ -46,4 +48,7 @@ fn setup(
         transform: Transform::from_translation(Vec3::ONE).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
+
+    //Skybox
+
 }
