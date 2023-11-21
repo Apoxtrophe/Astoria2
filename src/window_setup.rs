@@ -14,5 +14,6 @@ pub fn setup_window(
         window.present_mode = PresentMode::AutoVsync;
         window.cursor.icon = CursorIcon::Crosshair;
         window.cursor.grab_mode = CursorGrabMode::Locked;
-        window.cursor.visible = false;
+        window.cursor.visible = true;
 } 
+

@@ -6,11 +6,14 @@ pub const PLAYER_WIDTH: f32 = 1.0;
 pub const PLAYER_OFFSET: f32 = 0.01;
 pub const AUTOSTEP_HEIGHT: f32 = 0.3;
 pub const AUTOSTEP_WIDTH: f32 = 0.5; 
+pub const PLAYER_WALK_SPEED: f32 = 10.0;
+pub const PLAYER_SPRINT_SPEED: f32 = 18.0;
 
 //WORLD
-pub const WORLD_SIZE: f32 = 200.0;
-pub const SUBDIVISIONS: u32 = 100;
+pub const WORLD_SIZE: f32 = 20.0;
+pub const SUBDIVISIONS: u32 = 10;
 pub const TEXTURE_PATH: &str = "landscape.png";
+pub const TILE_FACTOR: f32 = 1.0;
 
 //MOUSE
 pub const MOUSE_SENSITIVITY: f32 = 0.05;

@@ -59,7 +59,10 @@ pub fn update_system(
         movement_direction += Vec3::X; // Right
     }
 
-    let speed = 5.0; // Set your desired speed
+    let mut speed = PLAYER_WALK_SPEED; // Set your desired speed
+    if keyboard_input.pressed(KeyCode::ShiftLeft) {
+        speed = PLAYER_SPRINT_SPEED;
+    }
 
     for (mut transform, _camera) in query.iter_mut() {
         // Transform the movement direction from the camera's local space to world space
@@ -133,3 +136,13 @@ pub fn draw_cursor(
     gizmos.circle(cursor_position, cursor_normal, CURSOR_RADIUS, CURSOR_COLOR);
 }
  
+pub fn center_cursor(mut windows: Query<&mut Window, With<PrimaryWindow>>,) {
+    let mut window = windows.single_mut();
+
+    // Calculate the center of the window
+    let center_x = window.width() / 2.0;
+    let center_y = window.height() / 2.0;
+
+    // Set the cursor position to the center of the window
+    window.set_cursor_position(Some(Vec2::new(center_x, center_y)));
+}
