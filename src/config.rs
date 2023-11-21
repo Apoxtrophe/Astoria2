@@ -8,8 +8,8 @@ pub const AUTOSTEP_HEIGHT: f32 = 0.3;
 pub const AUTOSTEP_WIDTH: f32 = 0.5; 
 
 //WORLD
-pub const WORLD_SIZE: f32 = 20.0;
-pub const SUBDIVISIONS: u32 = 10;
+pub const WORLD_SIZE: f32 = 200.0;
+pub const SUBDIVISIONS: u32 = 100;
 pub const TEXTURE_PATH: &str = "landscape.png";
 
 //MOUSE
