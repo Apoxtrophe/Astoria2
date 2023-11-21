@@ -8,6 +8,34 @@ use bevy::{
 use bevy::window::PrimaryWindow;
 
 use bevy_rapier3d::prelude::KinematicCharacterControllerOutput;
+use bevy_rapier3d::prelude::{Collider, KinematicCharacterController, RigidBody};
+use bevy_rapier3d::control::{CharacterAutostep, CharacterLength};
+
+
+pub fn build_camera(
+    mut commands: Commands,
+) {
+    commands.spawn(TransformBundle::default())
+        .with_children(|parent| {
+            // Spawn the camera as a child of the character
+            parent.spawn(Camera3dBundle {
+                transform: Transform::from_xyz(0.0, PLAYER_HEIGHT, 0.0),
+                ..default()
+            });
+        })
+        .insert(RigidBody::KinematicPositionBased)
+        .insert(Collider::cuboid(PLAYER_WIDTH, PLAYER_WIDTH, PLAYER_HEIGHT))
+        .insert(KinematicCharacterController {
+            offset: CharacterLength::Relative(PLAYER_OFFSET),
+            up: Vec3::Z,
+            autostep: Some(CharacterAutostep {
+                max_height: CharacterLength::Relative(AUTOSTEP_HEIGHT),
+                min_width: CharacterLength::Relative(AUTOSTEP_WIDTH),
+                include_dynamic_bodies: true,
+            }),
+            ..default()
+    });
+}
 
 pub fn update_system(
     time: Res<Time>,
