@@ -9,6 +9,8 @@ pub const AUTOSTEP_WIDTH: f32 = 0.5;
 
 //WORLD
 pub const WORLD_SIZE: f32 = 20.0;
+pub const SUBDIVISIONS: u32 = 10;
+pub const TEXTURE_PATH: &str = "landscape.png";
 
 //MOUSE
 pub const MOUSE_SENSITIVITY: f32 = 0.05;

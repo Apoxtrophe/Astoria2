@@ -32,23 +32,24 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
-    // plane
-    commands.spawn((
-        PbrBundle {
-            mesh: meshes.add(shape::Plane::from_size(WORLD_SIZE).into()),
-            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-            ..default()
-        },
-        Ground,
-    ));
+    let texture_handle = asset_server.load(TEXTURE_PATH);
 
+    let material = materials.add(StandardMaterial {
+        base_color_texture: Some(texture_handle),
+        ..default()
+    });
+    
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Plane { size: WORLD_SIZE, subdivisions: SUBDIVISIONS})),
+        material,
+        ..default()
+    });
+    
     // light
     commands.spawn(DirectionalLightBundle {
         transform: Transform::from_translation(Vec3::ONE).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
-
-    //Skybox
-
 }
