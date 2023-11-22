@@ -1,29 +1,24 @@
 use super::config;
 use config::*;
-
-use super::components;
-use components::*;
-
 use bevy::{
     input::mouse::MouseMotion,
     prelude::*,
 };
 use bevy::window::PrimaryWindow;
 
-use bevy_rapier3d::prelude::KinematicCharacterControllerOutput;
 use bevy_rapier3d::prelude::{Collider, KinematicCharacterController, RigidBody};
 use bevy_rapier3d::control::{CharacterAutostep, CharacterLength};
 use bevy_atmosphere::prelude::*;
 
-pub fn build_camera(
+pub fn player_initialization_system(
     mut commands: Commands,
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
 ) {
+    // Build Camera
     commands.spawn(TransformBundle::default())
         .with_children(|parent| {
-            // Spawn the camera as a child of the character
             parent.spawn(Camera3dBundle {
                 transform: Transform::from_xyz(0.0, PLAYER_HEIGHT, 0.0),
-                
                 ..default()
             })
             .insert(AtmosphereCamera::default());
@@ -39,13 +34,22 @@ pub fn build_camera(
                 include_dynamic_bodies: true,
             }),
             ..default()
-    });
+        });
+
+    // Center Cursor
+    let mut window = windows.single_mut();
+    let center_x = window.width() / 2.0;
+    let center_y = window.height() / 2.0;
+    window.set_cursor_position(Some(Vec2::new(center_x, center_y)));
 }
 
-pub fn update_system(
+pub fn player_update_system(
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
+    mut mouse_motion_events: EventReader<MouseMotion>,
     mut query: Query<(&mut Transform, &Camera)>,
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
+    mut current_pitch: Local<f32>,
 ) {
     let mut movement_direction = Vec3::ZERO;
 
@@ -76,21 +80,8 @@ pub fn update_system(
             transform.translation += normalized_movement * time.delta_seconds();
         }
     }
-}
 
-pub fn read_result_system(controllers: Query<(Entity, &KinematicCharacterControllerOutput)>) {
-    for (entity, output) in controllers.iter() {
-        println!("Entity {:?} moved by {:?} and touches the ground: {:?}",
-                  entity, output.effective_translation, output.grounded);
-    }
-}
-
-pub fn mouse_look_system(
-    time: Res<Time>,
-    mut mouse_motion_events: EventReader<MouseMotion>,
-    mut query: Query<(&mut Transform, &Camera)>,
-    mut current_pitch: Local<f32>, // Tracking the current pitch
-) {
+    // Mouse Look
     let delta_seconds = time.delta_seconds();
     for (mut transform, _camera) in query.iter_mut() {
         for event in mouse_motion_events.read() {
@@ -115,15 +106,10 @@ pub fn mouse_look_system(
             transform.rotation = yaw * transform.rotation; // Rotate around global y axis
         }
     }
-}
 
-pub fn center_cursor(mut windows: Query<&mut Window, With<PrimaryWindow>>,) {
+    // Center Cursor (dynamic part)
     let mut window = windows.single_mut();
-
-    // Calculate the center of the window
     let center_x = window.width() / 2.0;
     let center_y = window.height() / 2.0;
-
-    // Set the cursor position to the center of the window
     window.set_cursor_position(Some(Vec2::new(center_x, center_y)));
 }

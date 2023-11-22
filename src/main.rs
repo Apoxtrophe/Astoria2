@@ -1,6 +1,9 @@
 mod config;
 use config::*;
 
+mod player;
+use player::*;
+
 mod components;
 use components::*;
 
@@ -12,8 +15,6 @@ use game_systems::*;
 
 use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
-use bevy::render::mesh::MeshVertexAttribute;
-use bevy::render::render_resource::VertexFormat;
 use bevy::render::mesh::VertexAttributeValues;
 
 fn main() {
@@ -22,12 +23,9 @@ fn main() {
         .add_plugins(AtmospherePlugin)
         .add_systems(Startup, setup)
         .add_systems(Startup, setup_window)
-        .add_systems(Startup, build_camera)
-        .add_systems(Update, update_system)
-        .add_systems(Update, mouse_look_system)
-        .add_systems(Update, read_result_system)
-        //.add_systems(Update, draw_cursor)
-        .add_systems(Update, center_cursor)
+        .add_systems(Startup, player_initialization_system)
+        .add_systems(Update, player_update_system)
+        
         .run();
 }
 
@@ -45,7 +43,7 @@ fn setup(
     });
 
     // Load the texture
-    let texture_handle = asset_server.load("landscape.png");
+    let texture_handle = asset_server.load(TEXTURE_PATH);
 
     // Create a material with the texture
     let material = materials.add(StandardMaterial {
