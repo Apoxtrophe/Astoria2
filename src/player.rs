@@ -86,8 +86,7 @@ pub fn player_update_system(
             let yaw = Quat::from_rotation_y(yaw_diff);
             let target_rotation = yaw * transform.rotation * pitch;
             transform.rotation = transform.rotation.lerp(target_rotation, time.delta_seconds() * ROTATION_INTERPOLATION_FACTOR);
-        }
-        
+        }    
     }
     // Center Cursor (dynamic part)
     let mut window = windows.single_mut();
