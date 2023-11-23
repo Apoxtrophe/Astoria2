@@ -1,9 +1,6 @@
 use super::config;
 use config::*;
 
-use super::components;
-use components::*;
-
 use bevy::{
     input::mouse::MouseMotion,
     prelude::*,
@@ -62,17 +59,20 @@ pub fn player_update_system(
 
     // Aggregate total mouse motion for the frame
     let mut total_mouse_motion = Vec2::ZERO;
-    for event in mouse_motion_events.iter() {
+    for event in mouse_motion_events.read() {
         total_mouse_motion += event.delta;
     }
 
     for (mut transform, _camera) in query.iter_mut() {
         let mut world_movement_direction = transform.rotation.mul_vec3(movement_direction);
         world_movement_direction.y = 0.0;
-        if world_movement_direction.length_squared() > 0.0 {
+        let target_position = if world_movement_direction.length_squared() > 0.0 {
             let normalized_movement = world_movement_direction.normalize_or_zero() * speed;
-            transform.translation += normalized_movement * time.delta_seconds();
-        }
+            transform.translation + normalized_movement * time.delta_seconds()
+        } else {
+            transform.translation
+        };
+        transform.translation = transform.translation.lerp(target_position, time.delta_seconds() * MOVEMENT_INTERPOLATION_FACTOR);
 
         // Apply aggregated mouse motion
         let new_pitch = (*current_pitch - (total_mouse_motion.y * MOUSE_SENSITIVITY)).clamp(MIN_PITCH, MAX_PITCH);
@@ -84,8 +84,10 @@ pub fn player_update_system(
         if pitch_diff != 0.0 || yaw_diff != 0.0 {
             let pitch = Quat::from_rotation_x(pitch_diff);
             let yaw = Quat::from_rotation_y(yaw_diff);
-            transform.rotation = yaw * transform.rotation * pitch;
+            let target_rotation = yaw * transform.rotation * pitch;
+            transform.rotation = transform.rotation.lerp(target_rotation, time.delta_seconds() * ROTATION_INTERPOLATION_FACTOR);
         }
+        
     }
     // Center Cursor (dynamic part)
     let mut window = windows.single_mut();
