@@ -1,5 +1,9 @@
 use super::config;
 use config::*;
+
+use super::components;
+use components::*;
+
 use bevy::{
     input::mouse::MouseMotion,
     prelude::*,
@@ -12,7 +16,6 @@ use bevy_atmosphere::prelude::*;
 
 pub fn player_initialization_system(
     mut commands: Commands,
-    mut windows: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     // Build Camera
     commands.spawn(TransformBundle::default())
@@ -35,12 +38,6 @@ pub fn player_initialization_system(
             }),
             ..default()
         });
-
-    // Center Cursor
-    let mut window = windows.single_mut();
-    let center_x = window.width() / 2.0;
-    let center_y = window.height() / 2.0;
-    window.set_cursor_position(Some(Vec2::new(center_x, center_y)));
 }
 
 pub fn player_update_system(
@@ -51,62 +48,45 @@ pub fn player_update_system(
     mut windows: Query<&mut Window, With<PrimaryWindow>>,
     mut current_pitch: Local<f32>,
 ) {
-    let mut movement_direction = Vec3::ZERO;
+    let movement_direction = Vec3::new(
+        (keyboard_input.pressed(KeyCode::D) as i32 - keyboard_input.pressed(KeyCode::A) as i32) as f32,
+        0.0,
+        (keyboard_input.pressed(KeyCode::S) as i32 - keyboard_input.pressed(KeyCode::W) as i32) as f32,
+    );
 
-    if keyboard_input.pressed(KeyCode::W) {
-        movement_direction -= Vec3::Z; // Forward
-    }
-    if keyboard_input.pressed(KeyCode::S) {
-        movement_direction += Vec3::Z; // Backward
-    }
-    if keyboard_input.pressed(KeyCode::A) {
-        movement_direction -= Vec3::X; // Left
-    }
-    if keyboard_input.pressed(KeyCode::D) {
-        movement_direction += Vec3::X; // Right
-    }
+    let speed = if keyboard_input.pressed(KeyCode::ShiftLeft) {
+        PLAYER_SPRINT_SPEED
+    } else {
+        PLAYER_WALK_SPEED
+    };
 
-    let mut speed = PLAYER_WALK_SPEED; // Set your desired speed
-    if keyboard_input.pressed(KeyCode::ShiftLeft) {
-        speed = PLAYER_SPRINT_SPEED;
+    // Aggregate total mouse motion for the frame
+    let mut total_mouse_motion = Vec2::ZERO;
+    for event in mouse_motion_events.iter() {
+        total_mouse_motion += event.delta;
     }
 
     for (mut transform, _camera) in query.iter_mut() {
-        // Transform the movement direction from the camera's local space to world space
         let mut world_movement_direction = transform.rotation.mul_vec3(movement_direction);
         world_movement_direction.y = 0.0;
-        if world_movement_direction.length() > 0.0 {
-            let normalized_movement = world_movement_direction.normalize() * speed;
+        if world_movement_direction.length_squared() > 0.0 {
+            let normalized_movement = world_movement_direction.normalize_or_zero() * speed;
             transform.translation += normalized_movement * time.delta_seconds();
         }
-    }
 
-    // Mouse Look
-    let delta_seconds = time.delta_seconds();
-    for (mut transform, _camera) in query.iter_mut() {
-        for event in mouse_motion_events.read() {
-            let sensitivity_x = MOUSE_SENSITIVITY * delta_seconds;
-            let sensitivity_y = MOUSE_SENSITIVITY * delta_seconds;
+        // Apply aggregated mouse motion
+        let new_pitch = (*current_pitch - (total_mouse_motion.y * MOUSE_SENSITIVITY)).clamp(MIN_PITCH, MAX_PITCH);
+        let pitch_diff = new_pitch - *current_pitch;
+        *current_pitch = new_pitch;
 
-            // Calculate new pitch
-            let mut new_pitch = *current_pitch + (-event.delta.y * sensitivity_y);
-            new_pitch = new_pitch.clamp(MIN_PITCH, MAX_PITCH);
+        let yaw_diff = -total_mouse_motion.x * MOUSE_SENSITIVITY;
 
-            if new_pitch != *current_pitch {
-                // Apply pitch rotation only if it's within the limits
-                let pitch_diff = new_pitch - *current_pitch;
-                let pitch = Quat::from_rotation_x(pitch_diff);
-                transform.rotation = transform.rotation * pitch; // Rotate around local x axis
-
-                *current_pitch = new_pitch; // Update the current pitch
-            }
-
-            // Yaw rotation
-            let yaw = Quat::from_rotation_y(-event.delta.x * sensitivity_x);
-            transform.rotation = yaw * transform.rotation; // Rotate around global y axis
+        if pitch_diff != 0.0 || yaw_diff != 0.0 {
+            let pitch = Quat::from_rotation_x(pitch_diff);
+            let yaw = Quat::from_rotation_y(yaw_diff);
+            transform.rotation = yaw * transform.rotation * pitch;
         }
     }
-
     // Center Cursor (dynamic part)
     let mut window = windows.single_mut();
     let center_x = window.width() / 2.0;

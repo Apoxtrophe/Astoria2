@@ -5,13 +5,9 @@ mod player;
 use player::*;
 
 mod components;
-use components::*;
 
 mod window_setup;
 use window_setup::*;
-
-mod game_systems;
-use game_systems::*;
 
 use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
