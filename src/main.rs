@@ -4,8 +4,6 @@ use config::*;
 mod player;
 use player::*;
 
-mod components;
-
 mod window_setup;
 use window_setup::*;
 
@@ -21,7 +19,7 @@ fn main() {
         .add_systems(Startup, setup_window)
         .add_systems(Startup, player_initialization_system)
         .add_systems(Update, player_update_system)
-        
+        .add_systems(Update, read_result_system)
         .run();
 }
 
@@ -69,3 +67,4 @@ fn setup(
         ..Default::default()
     });
 }
+
